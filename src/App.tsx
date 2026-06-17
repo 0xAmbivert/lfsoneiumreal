@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { CSSProperties, FormEvent, ReactNode } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import {
   ArrowLeftRight,
   Shuffle,
@@ -13,7 +13,6 @@ import {
   CheckCircle2,
   Search,
   ChevronRight,
-  Database,
   Terminal,
   ArrowDown,
   Shield,
