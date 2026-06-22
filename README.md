@@ -3,7 +3,9 @@
 A dark, cinematic, glassmorphism dApp for the **Soneium Mainnet**. It keeps the original
 Lithos cinematic theme — Playfair Display heading, real artwork backgrounds, and a
 cursor-following **canvas spotlight reveal** — and layers on a full production dApp:
-Swap, Bridge, a view-only Badge Explorer, and an automation engine with a live audit terminal.
+a Features tour, Swap, Bridge, an **Airdrop Farming quest board**, a **Soneium Score Season
+system + eligibility checker**, a view-only Badge Explorer, and an automation engine with a
+live audit terminal.
 
 Built with React 18 + TypeScript + Vite + Tailwind CSS + lucide-react + ethers v5.
 
@@ -27,8 +29,31 @@ npm run preview  # preview the production build
 - **Spotlight reveal** — a canvas renders a radial gradient mask that is converted to a data URL
   and applied as a CSS mask over `BG_IMAGE_2`, revealing it over `BG_IMAGE_1` under the cursor
   (radius 260px, 0.1 lerp smoothing).
-- **Center pill nav** appears only when connected (Swap / Bridge / Badge / About), with a
-  mobile drawer (Esc / backdrop / X to close) for parity on small screens.
+- **Center pill nav** appears only when connected (Features / Swap / Bridge / Farm / Season /
+  Badge / Engine), with a mobile drawer (Esc / backdrop / X to close) for parity on small screens.
+
+## Airdrop Farming & Season System
+
+- **Features tour** (`features-section`) — a grid that depicts every module in the dApp with a
+  Live / Sim tag, so reviewers can see the full surface at a glance.
+- **Airdrop Farming** (`farm-section`) — 17 on-chain & social quests grouped into Swap, Liquidity,
+  Bridge, NFT, Daily and Ecosystem. On-chain quests route through the confirm-modal + audit
+  terminal; each completion adds to your Soneium Score. Progress is persisted in `localStorage`
+  (`_lfsoneium_quests`). Includes an ecosystem strip (Sake, Kyo, WaveX, Uniswap, Superboard,
+  Emerald, Nomis, Astar).
+- **Season System** (`season-section`) — Season 11 "Game On" banner with a live countdown, an SVG
+  score gauge, the 80 / 100 qualification threshold, and a soulbound (SBT) badge claim that
+  unlocks at the threshold.
+- **Eligibility checker** — enter any wallet to estimate its season score from **live Soneium RPC**
+  reads (transaction count + ERC-721/1155 badge holdings), broken down into Tx activity, Active
+  days, NFT score and Quests, with a graceful demo-data fallback.
+
+### Soneium Score facts used
+
+Soneium is the Sony Block Solutions Labs + Startale L2 on the OP Stack / Superchain. **Soneium
+Score** runs in **28-day seasons**; a wallet scoring **≥ 80 / 100** in a season earns one
+**soulbound badge**. Season 11 "Game On" began **3 Jun 2026**. Quests are surfaced through the
+Soneium portal, Startale and Galxe campaigns (Conquest weekly themes, Spotlight projects).
 
 ## Network configuration
 

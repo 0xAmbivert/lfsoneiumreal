@@ -16,6 +16,25 @@ import {
   Terminal,
   ArrowDown,
   Shield,
+  Sparkles,
+  CalendarDays,
+  Gauge,
+  Target,
+  Trophy,
+  Flame,
+  ListChecks,
+  Coins,
+  BadgeCheck,
+  Clock,
+  ExternalLink,
+  Droplets,
+  Image as ImageIcon,
+  Repeat,
+  Users,
+  Zap,
+  Activity,
+  TrendingUp,
+  LayoutGrid,
 } from 'lucide-react'
 import { ethers } from 'ethers'
 
@@ -99,6 +118,146 @@ const EMPTY_METRICS: BadgeMetrics = {
   ogBal: 0,
   walletTotalTx: 0,
   nftCount: 0,
+}
+
+/* ----------------------- Soneium Score / Airdrop ----------------------- */
+
+const SEASON = {
+  number: 11,
+  name: 'Game On',
+  durationDays: 28,
+  threshold: 80,
+  maxScore: 100,
+  startISO: '2026-06-03',
+  endISO: '2026-07-01',
+}
+
+type QuestCat = 'Swap' | 'Liquidity' | 'Bridge' | 'NFT' | 'Daily' | 'Ecosystem'
+
+type Quest = {
+  id: string
+  cat: QuestCat
+  title: string
+  protocol: string
+  desc: string
+  target: number
+  points: number
+  kind: 'onchain' | 'social'
+}
+
+type SeasonResult = {
+  address: string
+  txScore: number
+  daysScore: number
+  nftScore: number
+  questScore: number
+  total: number
+  activeDays: number
+  eligible: boolean
+  live: boolean
+}
+
+const QUEST_CATS: QuestCat[] = ['Swap', 'Liquidity', 'Bridge', 'NFT', 'Daily', 'Ecosystem']
+
+const QUESTS: Quest[] = [
+  { id: 'swap-uni', cat: 'Swap', title: 'Execute 10 Uniswap V4 swaps', protocol: 'Uniswap', desc: 'Complete 10 unique swaps on the V4 Universal Router.', target: 10, points: 12, kind: 'onchain' },
+  { id: 'swap-kyo', cat: 'Swap', title: 'Swap on Kyo Finance', protocol: 'Kyo Finance', desc: 'Route a trade through the native Soneium DEX.', target: 3, points: 6, kind: 'onchain' },
+  { id: 'swap-wave', cat: 'Swap', title: 'Trade a pair on WaveX', protocol: 'WaveX', desc: 'Perform a market swap on WaveX.', target: 2, points: 5, kind: 'onchain' },
+  { id: 'lp-sake', cat: 'Liquidity', title: 'Supply to Sake Finance', protocol: 'Sake Finance', desc: 'Deposit collateral into a Sake lending market.', target: 1, points: 8, kind: 'onchain' },
+  { id: 'lp-kyo', cat: 'Liquidity', title: 'Add a Kyo LP position', protocol: 'Kyo Finance', desc: 'Provide liquidity to any Kyo pool.', target: 1, points: 7, kind: 'onchain' },
+  { id: 'lp-wrap', cat: 'Liquidity', title: 'Wrap ETH into WETH', protocol: 'WETH', desc: 'Call deposit() on the canonical WETH contract.', target: 1, points: 4, kind: 'onchain' },
+  { id: 'bridge-in', cat: 'Bridge', title: 'Bridge ETH from Ethereum L1', protocol: 'L1 Standard Bridge', desc: 'Deposit ETH from L1 into Soneium via the canonical gateway.', target: 1, points: 10, kind: 'onchain' },
+  { id: 'bridge-fast', cat: 'Bridge', title: 'Use a fast bridge route', protocol: 'Relay / Superbridge', desc: 'Move assets via a third-party fast bridge.', target: 1, points: 6, kind: 'onchain' },
+  { id: 'nft-emerald', cat: 'NFT', title: 'Mint on the Emerald launchpad', protocol: 'Emerald', desc: 'Mint an NFT from a featured Emerald drop.', target: 1, points: 8, kind: 'onchain' },
+  { id: 'nft-score', cat: 'NFT', title: 'Mint an NFT-Score collectible', protocol: 'Soneium Score', desc: 'Mint a season NFT that boosts your NFT Score.', target: 1, points: 7, kind: 'onchain' },
+  { id: 'nft-nomis', cat: 'NFT', title: 'Mint your Nomis PoA badge', protocol: 'Nomis', desc: 'Turn wallet reputation into a soulbound PoA badge.', target: 1, points: 5, kind: 'onchain' },
+  { id: 'daily-checkin', cat: 'Daily', title: 'Daily on-chain check-in', protocol: 'Galxe', desc: 'Submit one on-chain check-in transaction per day.', target: 7, points: 9, kind: 'onchain' },
+  { id: 'daily-superboard', cat: 'Daily', title: 'Keep a Superboard streak', protocol: 'Superboard', desc: 'Maintain your Superboard activity streak.', target: 5, points: 6, kind: 'social' },
+  { id: 'daily-follow', cat: 'Daily', title: 'Follow @soneium on X', protocol: 'X / Twitter', desc: 'Social engagement task on Galxe.', target: 1, points: 2, kind: 'social' },
+  { id: 'eco-conquest', cat: 'Ecosystem', title: 'Complete a Conquest week', protocol: 'Soneium Conquest', desc: 'Finish all tasks in one weekly Conquest theme.', target: 4, points: 8, kind: 'social' },
+  { id: 'eco-spotlight', cat: 'Ecosystem', title: 'Finish a Spotlight project', protocol: 'Spotlight by Soneium', desc: 'Complete every quest for one Spotlight project.', target: 3, points: 7, kind: 'social' },
+  { id: 'eco-astar', cat: 'Ecosystem', title: 'Engage ASTR via Astar', protocol: 'Astar Network', desc: 'Use ASTR utility bridged across the Soneium ecosystem.', target: 1, points: 6, kind: 'onchain' },
+]
+
+const ECOSYSTEM = [
+  { name: 'Sake Finance', tag: 'Lending', url: 'https://soneium.org/en/ecosystem/', blurb: 'Money-market lending and borrowing.' },
+  { name: 'Kyo Finance', tag: 'DEX', url: 'https://soneium.org/en/ecosystem/', blurb: 'Native concentrated-liquidity DEX.' },
+  { name: 'WaveX', tag: 'DeFi', url: 'https://soneium.org/en/ecosystem/', blurb: 'On-chain trading venue.' },
+  { name: 'Uniswap', tag: 'DEX', url: 'https://app.uniswap.org', blurb: 'V4 Universal Router swaps.' },
+  { name: 'Superboard', tag: 'Quests', url: 'https://soneium.org/en/ecosystem/', blurb: 'Quest and points aggregator.' },
+  { name: 'Emerald', tag: 'NFT', url: 'https://www.emerald.cool', blurb: 'Premier Soneium NFT launchpad.' },
+  { name: 'Nomis', tag: 'Reputation', url: 'https://nomis.cc/scores/soneium', blurb: 'On-chain reputation score.' },
+  { name: 'Astar', tag: 'Infra', url: 'https://astar.network', blurb: 'ASTR utility, staking and grants.' },
+]
+
+const FEATURES: { icon: typeof Sparkles; title: string; desc: string; tag: string }[] = [
+  { icon: Sparkles, title: 'Cinematic Spotlight Reveal', desc: 'A cursor-tracking canvas mask peels back the cover layer to reveal the world beneath.', tag: 'Live' },
+  { icon: Wallet, title: 'Hybrid Wallet Connect', desc: 'Real injected signer with a graceful demo-mode fallback when none is present.', tag: 'Live' },
+  { icon: Shield, title: 'Network Auto-Switch & Guard', desc: 'Detects the wrong chain and adds or switches to Soneium (0x74c) in one click.', tag: 'Live' },
+  { icon: ArrowLeftRight, title: 'Swap & Liquidity Packager', desc: 'Uniswap V4 routing plus one-click WETH wrap / unwrap of native dust.', tag: 'Sim' },
+  { icon: Shuffle, title: 'Cross-Chain Bridge', desc: 'Deposit ETH from Ethereum L1 into Soneium through the canonical gateway.', tag: 'Sim' },
+  { icon: ListChecks, title: 'Airdrop Quest Board', desc: 'Dozens of on-chain activity quests across swaps, LPs, bridging, NFTs and dailies.', tag: 'Live' },
+  { icon: CalendarDays, title: 'Season System', desc: '28-day seasons with a live score gauge and a 80 / 100 qualification threshold.', tag: 'Live' },
+  { icon: Gauge, title: 'Soneium Score Checker', desc: 'Estimate any wallet score from live on-chain transactions and holdings.', tag: 'Live' },
+  { icon: BadgeCheck, title: 'Soulbound Badge Claim', desc: 'Mint the season SBT once you cross the score threshold.', tag: 'Sim' },
+  { icon: Award, title: 'Identity & Badge Explorer', desc: 'Read ERC-721 + ERC-1155 badge ownership for any address over Soneium RPC.', tag: 'Live' },
+  { icon: Activity, title: 'Live Audit Terminal', desc: 'Every action streams into a real-time, auto-scrolling session terminal.', tag: 'Live' },
+  { icon: Terminal, title: 'Automation Smart-Mix Loop', desc: 'A jittered scheduler that mimics organic on-chain activity every 2 to 7 seconds.', tag: 'Sim' },
+]
+
+function questPointsFor(q: Quest, state: Record<string, number>) {
+  const prog = Math.min(state[q.id] || 0, q.target)
+  return (prog / q.target) * q.points
+}
+
+function computeFarmed(state: Record<string, number>) {
+  return Math.min(100, Math.round(QUESTS.reduce((sum, q) => sum + questPointsFor(q, state), 0)))
+}
+
+function catIcon(cat: QuestCat) {
+  switch (cat) {
+    case 'Swap':
+      return Repeat
+    case 'Liquidity':
+      return Droplets
+    case 'Bridge':
+      return Shuffle
+    case 'NFT':
+      return ImageIcon
+    case 'Daily':
+      return Zap
+    case 'Ecosystem':
+      return Users
+    default:
+      return Target
+  }
+}
+
+function questSelector(cat: QuestCat) {
+  const sel: Record<QuestCat, string> = {
+    Swap: '0x3593564c',
+    Liquidity: '0xd0e30db0',
+    Bridge: '0xb1a1a5b4',
+    NFT: '0x1249c58b',
+    Daily: '0x4e71d92d',
+    Ecosystem: '0xa9059cbb',
+  }
+  return sel[cat] + '0'.repeat(56)
+}
+
+function questTarget(cat: QuestCat) {
+  switch (cat) {
+    case 'Swap':
+      return CONTRACTS.UNI_ROUTER
+    case 'Liquidity':
+      return CONTRACTS.WETH
+    case 'Bridge':
+      return CONTRACTS.L1_BRIDGE
+    case 'NFT':
+      return CONTRACTS.OG
+    default:
+      return CONTRACTS.UNI_ROUTER
+  }
 }
 
 /* ----------------------------- Helpers ----------------------------- */
@@ -244,7 +403,7 @@ export default function App() {
 
   // UI
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState('swap')
+  const [activeTab, setActiveTab] = useState('features')
   const [txProcessing, setTxProcessing] = useState(false)
   const [toast, setToast] = useState<ToastState>(null)
   const [confirmModal, setConfirmModal] = useState<ConfirmModalState>({
@@ -273,6 +432,32 @@ export default function App() {
   const [logs, setLogs] = useState<AuditLog[]>([
     { id: 'boot', timestamp: nowStamp(), type: 'info', message: 'Engine cluster standing by for connection state change.' },
   ])
+
+  // Airdrop farming + season
+  const [quests, setQuests] = useState<Record<string, number>>({})
+  const [seasonAddr, setSeasonAddr] = useState('')
+  const [seasonError, setSeasonError] = useState('')
+  const [seasonLoading, setSeasonLoading] = useState(false)
+  const [seasonResult, setSeasonResult] = useState<SeasonResult | null>(null)
+  const [badgeClaimed, setBadgeClaimed] = useState(false)
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('_lfsoneium_quests')
+      if (raw) setQuests(JSON.parse(raw))
+      if (localStorage.getItem('_lfsoneium_badge') === '1') setBadgeClaimed(true)
+    } catch {
+      // ignore corrupt storage
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('_lfsoneium_quests', JSON.stringify(quests))
+    } catch {
+      // ignore quota errors
+    }
+  }, [quests])
 
   // Spotlight cursor
   const mouse = useRef({ x: -999, y: -999 })
@@ -608,6 +793,111 @@ export default function App() {
     }
   }
 
+  /* ---- Airdrop farming actions ---- */
+  const advanceQuest = (q: Quest) => {
+    setQuests((prev) => {
+      const cur = Math.min(prev[q.id] || 0, q.target)
+      if (cur >= q.target) return prev
+      return { ...prev, [q.id]: cur + 1 }
+    })
+  }
+
+  const doQuest = (q: Quest) => {
+    const cur = Math.min(quests[q.id] || 0, q.target)
+    if (cur >= q.target) return
+    const willComplete = cur + 1 >= q.target
+    if (q.kind === 'onchain') {
+      stageTransactionWrite(q.title, questTarget(q.cat), questSelector(q.cat), '0.0', async () => {
+        await new Promise((r) => setTimeout(r, 1100))
+        advanceQuest(q)
+        showToast('success', willComplete ? `${q.title} complete — +${q.points} Score pts.` : `${q.title}: step ${cur + 1}/${q.target} recorded.`)
+        addLog('success', `Quest tx confirmed — ${q.title} (${cur + 1}/${q.target}).`)
+      })
+    } else {
+      advanceQuest(q)
+      showToast('success', willComplete ? `${q.title} complete — +${q.points} Score pts.` : `${q.title}: ${cur + 1}/${q.target}.`)
+      addLog('info', `Social quest recorded — ${q.title}.`)
+    }
+  }
+
+  const resetFarming = () => {
+    setQuests({})
+    setBadgeClaimed(false)
+    try {
+      localStorage.removeItem('_lfsoneium_badge')
+    } catch {
+      // ignore
+    }
+    addLog('info', 'Airdrop farming progress reset.')
+  }
+
+  const claimSeasonBadge = () => {
+    if (badgeClaimed) return
+    if (computeFarmed(quests) < SEASON.threshold) return
+    stageTransactionWrite(`Mint Season ${SEASON.number} SBT Badge`, CONTRACTS.S4, questSelector('NFT'), '0.0', async () => {
+      await new Promise((r) => setTimeout(r, 1600))
+      setBadgeClaimed(true)
+      try {
+        localStorage.setItem('_lfsoneium_badge', '1')
+      } catch {
+        // ignore
+      }
+      showToast('success', `Season ${SEASON.number} “${SEASON.name}” SBT badge claimed — soulbound to your wallet.`)
+      addLog('success', `Season ${SEASON.number} badge minted (SBT, non-transferable).`)
+    })
+  }
+
+  const handleSeasonScan = async (e: FormEvent) => {
+    e.preventDefault()
+    setSeasonError('')
+    if (!ethers.utils.isAddress(seasonAddr)) {
+      setSeasonError('Invalid EVM address format. Expected a 0x… 40-hex address.')
+      return
+    }
+    const target = ethers.utils.getAddress(seasonAddr)
+    setSeasonLoading(true)
+    setSeasonResult(null)
+    addLog('info', `Estimating Season ${SEASON.number} score for ${shortAddr(target)}…`)
+
+    const build = (tx: number, badges: number, live: boolean): SeasonResult => {
+      const txScore = Math.min(35, Math.round(tx / 12))
+      const activeDays = Math.min(SEASON.durationDays, Math.max(1, Math.round(tx / 25)))
+      const daysScore = Math.min(25, activeDays)
+      const nftScore = Math.min(25, badges * 6)
+      const questScore = Math.min(15, Math.round((txScore + nftScore) / 6))
+      const total = Math.min(100, txScore + daysScore + nftScore + questScore)
+      return { address: target, txScore, daysScore, nftScore, questScore, total, activeDays, eligible: total >= SEASON.threshold, live }
+    }
+
+    try {
+      const provider = new ethers.providers.JsonRpcProvider(SONEIUM_RPC)
+      const erc721Bal = async (addr: string) => {
+        const c = new ethers.Contract(addr, ERC721_ABI, provider)
+        const bn = await c.balanceOf(target)
+        return (bn as ethers.BigNumber).toNumber()
+      }
+      const og = new ethers.Contract(CONTRACTS.OG, ERC1155_ABI, provider)
+      const [s1, s2, s3, s4, ogBn, txc] = await Promise.all([
+        erc721Bal(CONTRACTS.S1),
+        erc721Bal(CONTRACTS.S2),
+        erc721Bal(CONTRACTS.S3),
+        erc721Bal(CONTRACTS.S4),
+        og.balanceOf(target, 0),
+        provider.getTransactionCount(target),
+      ])
+      const badges = s1 + s2 + s3 + s4 + (ogBn as ethers.BigNumber).toNumber()
+      setSeasonResult(build(txc, badges, true))
+      addLog('success', `Season score estimated from live Soneium RPC for ${shortAddr(target)}.`)
+    } catch {
+      const tx = Math.floor(Math.random() * 800) + 40
+      const badges = Math.floor(Math.random() * 4)
+      setSeasonResult(build(tx, badges, false))
+      addLog('warn', 'Live RPC unavailable — season estimate uses a demo snapshot.')
+    } finally {
+      setSeasonLoading(false)
+    }
+  }
+
   const scrollToSection = (id: string) => {
     setActiveTab(id.replace('-section', ''))
     const el = document.getElementById(id)
@@ -632,11 +922,23 @@ export default function App() {
   const bgPosClass = isConnected ? 'fixed' : 'absolute'
 
   const navTabs = [
+    { id: 'features-section', label: 'Features', icon: LayoutGrid },
     { id: 'swap-section', label: 'Swap', icon: ArrowLeftRight },
     { id: 'bridge-section', label: 'Bridge', icon: Shuffle },
+    { id: 'farm-section', label: 'Farm', icon: Target },
+    { id: 'season-section', label: 'Season', icon: CalendarDays },
     { id: 'badge-section', label: 'Badge', icon: Award },
-    { id: 'about-section', label: 'About', icon: Info },
+    { id: 'about-section', label: 'Engine', icon: Info },
   ]
+
+  const farmedPoints = computeFarmed(quests)
+  const completedCount = QUESTS.filter((q) => (quests[q.id] || 0) >= q.target).length
+  const eligible = farmedPoints >= SEASON.threshold
+  const activeDays = Math.min(
+    SEASON.durationDays,
+    (quests['daily-checkin'] || 0) + (quests['daily-superboard'] || 0),
+  )
+  const daysLeft = Math.max(0, Math.ceil((new Date(SEASON.endISO).getTime() - Date.now()) / 86400000))
 
   return (
     <div className={rootClass} style={ { fontFamily: "'Inter', sans-serif" } }>
@@ -838,6 +1140,51 @@ export default function App() {
           key="dapp-shell"
           className="relative z-50 pt-24 pb-24 w-full text-white flex flex-col gap-24 max-w-5xl mx-auto px-5 hero-anim hero-fade"
         >
+          {/* Section 0 — Features overview */}
+          <section id="features-section" className="min-h-[calc(100vh-6rem)] flex flex-col justify-center scroll-mt-24">
+            <SectionHeader
+              icon={<LayoutGrid className="w-5 h-5" />}
+              title="Everything in this dApp"
+              subtitle="A guided tour of every module on LfSoneium"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {FEATURES.map((f) => (
+                <div key={f.title} className="glass-panel rounded-2xl p-5 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2.5 rounded-xl bg-[#e8702a]/10 border border-[#e8702a]/20 text-[#e8702a]">
+                      <f.icon className="w-5 h-5" />
+                    </div>
+                    <span
+                      className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                        f.tag === 'Live'
+                          ? 'text-emerald-300 border-emerald-400/30 bg-emerald-400/10'
+                          : 'text-[#e8702a] border-[#e8702a]/30 bg-[#e8702a]/10'
+                      }`}
+                    >
+                      {f.tag}
+                    </span>
+                  </div>
+                  <h3 className="text-white font-medium">{f.title}</h3>
+                  <p className="text-sm text-white/60 leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                onClick={() => scrollToSection('farm-section')}
+                className="bg-[#e8702a] hover:bg-[#d2611f] text-white text-sm font-medium px-6 py-3 rounded-full transition-all flex items-center gap-2"
+              >
+                <Target className="w-4 h-4" /> Start farming the airdrop
+              </button>
+              <button
+                onClick={() => scrollToSection('season-section')}
+                className="bg-white/10 hover:bg-white/20 text-white text-sm font-medium px-6 py-3 rounded-full transition-all flex items-center gap-2"
+              >
+                <CalendarDays className="w-4 h-4" /> Check Season {SEASON.number}
+              </button>
+            </div>
+          </section>
+
           {/* Section 1 — Swap */}
           <section id="swap-section" className="min-h-[calc(100vh-6rem)] flex flex-col justify-center">
             <SectionHeader
@@ -1052,6 +1399,348 @@ export default function App() {
             </div>
           </section>
 
+          {/* Section 2.5 — Airdrop Farming */}
+          <section id="farm-section" className="scroll-mt-24">
+            <SectionHeader
+              icon={<Target className="w-5 h-5" />}
+              title="Soneium Airdrop Farming"
+              subtitle={`On-chain activity quests · Season ${SEASON.number} “${SEASON.name}”`}
+            />
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="glass-panel rounded-2xl p-4 flex items-center gap-3">
+                <Coins className="w-6 h-6 text-[#e8702a]" />
+                <div>
+                  <div className="text-2xl font-light text-white">
+                    {farmedPoints}
+                    <span className="text-sm text-white/40">/100</span>
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wider text-white/50 font-mono">Score farmed</div>
+                </div>
+              </div>
+              <div className="glass-panel rounded-2xl p-4 flex items-center gap-3">
+                <ListChecks className="w-6 h-6 text-emerald-400" />
+                <div>
+                  <div className="text-2xl font-light text-white">
+                    {completedCount}
+                    <span className="text-sm text-white/40">/{QUESTS.length}</span>
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wider text-white/50 font-mono">Quests done</div>
+                </div>
+              </div>
+              <div className="glass-panel rounded-2xl p-4 flex items-center gap-3">
+                <Flame className="w-6 h-6 text-[#e8702a]" />
+                <div>
+                  <div className="text-2xl font-light text-white">
+                    {activeDays}
+                    <span className="text-sm text-white/40">d</span>
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wider text-white/50 font-mono">Active streak</div>
+                </div>
+              </div>
+              <div className="glass-panel rounded-2xl p-4 flex items-center gap-3">
+                <TrendingUp className="w-6 h-6 text-emerald-400" />
+                <div>
+                  <div className={`text-xl font-light ${eligible ? 'text-emerald-400' : 'text-white'}`}>
+                    {eligible ? 'Eligible' : `${SEASON.threshold - farmedPoints} to go`}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wider text-white/50 font-mono">Badge threshold</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="glass-panel rounded-2xl p-5 mb-8">
+              <div className="flex items-center justify-between text-xs font-mono text-white/60 mb-2">
+                <span>Season progress</span>
+                <span>
+                  {farmedPoints} / {SEASON.maxScore} · need {SEASON.threshold}+
+                </span>
+              </div>
+              <div className="relative h-3 rounded-full bg-white/10 overflow-hidden">
+                <div className="absolute inset-y-0 left-0 bg-[#e8702a] rounded-full transition-all duration-500" style={ { width: `${farmedPoints}%` } } />
+                <div className="absolute inset-y-0" style={ { left: `${SEASON.threshold}%` } }>
+                  <div className="w-px h-full bg-white/70" />
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-4">
+                <button onClick={() => scrollToSection('season-section')} className="text-xs font-mono text-[#e8702a] hover:underline">
+                  Open Season checker
+                </button>
+                <button onClick={resetFarming} className="text-xs font-mono text-white/40 hover:text-white/70">
+                  Reset progress
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-8">
+              {QUEST_CATS.map((cat) => {
+                const Icon = catIcon(cat)
+                const items = QUESTS.filter((q) => q.cat === cat)
+                return (
+                  <div key={cat}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Icon className="w-4 h-4 text-[#e8702a]" />
+                      <h3 className="text-sm font-medium text-white">{cat} quests</h3>
+                      <span className="text-[10px] font-mono text-white/40">{items.length}</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {items.map((q) => {
+                        const prog = Math.min(quests[q.id] || 0, q.target)
+                        const done = prog >= q.target
+                        return (
+                          <div
+                            key={q.id}
+                            className={`rounded-2xl p-5 border transition-all ${
+                              done ? 'border-emerald-400/30 bg-emerald-400/5' : 'border-white/10 bg-white/5'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="text-white text-sm font-medium">{q.title}</h4>
+                                  {q.kind === 'onchain' ? (
+                                    <span className="text-[9px] font-mono uppercase text-[#e8702a] border border-[#e8702a]/30 bg-[#e8702a]/10 rounded px-1.5 py-0.5">
+                                      on-chain
+                                    </span>
+                                  ) : (
+                                    <span className="text-[9px] font-mono uppercase text-white/50 border border-white/15 bg-white/5 rounded px-1.5 py-0.5">
+                                      social
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-white/55 mt-1 leading-relaxed">{q.desc}</p>
+                                <div className="text-[10px] font-mono text-white/40 mt-1">{q.protocol}</div>
+                              </div>
+                              <div className="text-[#e8702a] font-mono text-sm font-bold flex items-center gap-1 shrink-0">
+                                <Coins className="w-3 h-3" />
+                                {q.points}
+                              </div>
+                            </div>
+                            <div className="mt-3 flex items-center gap-3">
+                              <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                                <div className="h-full bg-[#e8702a] rounded-full transition-all" style={ { width: `${(prog / q.target) * 100}%` } } />
+                              </div>
+                              <span className="text-[10px] font-mono text-white/50">
+                                {prog}/{q.target}
+                              </span>
+                              <button
+                                onClick={() => doQuest(q)}
+                                disabled={done}
+                                className={`text-xs font-medium px-4 py-1.5 rounded-full transition-all ${
+                                  done ? 'bg-emerald-400/15 text-emerald-300 cursor-default' : 'bg-[#e8702a] hover:bg-[#d2611f] text-white'
+                                }`}
+                              >
+                                {done ? 'Done' : q.kind === 'onchain' ? 'Run' : 'Claim'}
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="mt-10">
+              <div className="flex items-center gap-2 mb-3">
+                <Users className="w-4 h-4 text-[#e8702a]" />
+                <h3 className="text-sm font-medium text-white">Ecosystem protocols to farm</h3>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {ECOSYSTEM.map((p) => (
+                  <a
+                    key={p.name}
+                    href={p.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 p-4 transition-all"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-white text-sm font-medium">{p.name}</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-white/40 group-hover:text-[#e8702a]" />
+                    </div>
+                    <div className="text-[10px] font-mono uppercase tracking-wider text-[#e8702a] mt-1">{p.tag}</div>
+                    <p className="text-xs text-white/55 mt-1 leading-relaxed">{p.blurb}</p>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Section 2.6 — Season System & Checker */}
+          <section id="season-section" className="scroll-mt-24">
+            <SectionHeader
+              icon={<CalendarDays className="w-5 h-5" />}
+              title="Soneium Score — Season System"
+              subtitle="28-day seasons · score 80/100+ to earn a soulbound badge"
+            />
+
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 mb-6">
+              <div className="glass-panel rounded-2xl p-6 relative overflow-hidden">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-[10px] font-mono uppercase tracking-widest text-[#e8702a]">Current season</div>
+                    <h3 className="text-3xl font-playfair italic text-white mt-1">Season {SEASON.number}</h3>
+                    <p className="text-white/60 text-sm mt-1">“{SEASON.name}” — every on-chain action counts.</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center gap-1.5 text-white/70 font-mono text-sm justify-end">
+                      <Clock className="w-4 h-4 text-[#e8702a]" />
+                      {daysLeft}d left
+                    </div>
+                    <div className="text-[10px] font-mono text-white/40 mt-1">
+                      {SEASON.startISO} → {SEASON.endISO}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3 mt-5 font-mono text-xs">
+                  <div className="bg-black/30 border border-white/10 rounded-xl p-3">
+                    <div className="text-white/50 text-[10px] uppercase">Duration</div>
+                    <div className="text-white mt-1">{SEASON.durationDays} days</div>
+                  </div>
+                  <div className="bg-black/30 border border-white/10 rounded-xl p-3">
+                    <div className="text-white/50 text-[10px] uppercase">Threshold</div>
+                    <div className="text-white mt-1">{SEASON.threshold}/{SEASON.maxScore}</div>
+                  </div>
+                  <div className="bg-black/30 border border-white/10 rounded-xl p-3">
+                    <div className="text-white/50 text-[10px] uppercase">Reward</div>
+                    <div className="text-white mt-1">1 SBT badge</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="glass-panel rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+                <div className="flex items-center gap-2 text-white/60 text-xs font-mono mb-3">
+                  <Gauge className="w-4 h-4 text-[#e8702a]" />
+                  Your live score
+                </div>
+                <div className="relative w-32 h-32">
+                  <svg viewBox="0 0 120 120" className="w-32 h-32 -rotate-90">
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="10" />
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="52"
+                      fill="none"
+                      stroke="#e8702a"
+                      strokeWidth="10"
+                      strokeLinecap="round"
+                      strokeDasharray={`${(farmedPoints / 100) * 326.7} 326.7`}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-3xl font-light text-white">{farmedPoints}</span>
+                    <span className="text-[10px] font-mono text-white/40">/ 100</span>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-1.5 text-xs font-mono">
+                  <BadgeCheck className={`w-4 h-4 ${eligible ? 'text-emerald-400' : 'text-white/30'}`} />
+                  <span className={eligible ? 'text-emerald-300' : 'text-white/50'}>
+                    {eligible ? 'Eligible for badge' : `${Math.max(0, SEASON.threshold - farmedPoints)} pts to qualify`}
+                  </span>
+                </div>
+                <button
+                  onClick={claimSeasonBadge}
+                  disabled={!eligible || badgeClaimed}
+                  className={`mt-4 w-full py-3 rounded-full text-sm font-medium flex items-center justify-center gap-2 transition-all ${
+                    badgeClaimed
+                      ? 'bg-emerald-400/15 text-emerald-300 cursor-default'
+                      : eligible
+                        ? 'bg-[#e8702a] hover:bg-[#d2611f] text-white'
+                        : 'bg-white/5 text-white/30 cursor-not-allowed'
+                  }`}
+                >
+                  <Trophy className="w-4 h-4" />
+                  {badgeClaimed ? `Season ${SEASON.number} badge claimed` : `Claim Season ${SEASON.number} badge`}
+                </button>
+              </div>
+            </div>
+
+            <div className="glass-panel rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Activity className="w-5 h-5 text-[#e8702a]" />
+                <span className="text-white text-sm font-medium">Season eligibility checker</span>
+              </div>
+              <p className="text-xs text-white/55 mb-4 leading-relaxed">
+                Enter any wallet to estimate its Season {SEASON.number} score from live Soneium on-chain activity — transactions,
+                active days and badge / NFT holdings. Read-only, no signature required.
+              </p>
+              <form onSubmit={handleSeasonScan} className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1 flex items-center gap-3 bg-black/30 border border-white/10 rounded-xl px-4 py-3">
+                  <Search className="w-4 h-4 text-white/60" />
+                  <input
+                    value={seasonAddr}
+                    onChange={(e) => setSeasonAddr(e.target.value)}
+                    placeholder="0x… wallet to check"
+                    className="flex-1 bg-transparent text-sm text-white placeholder-white/40 outline-none font-mono"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={seasonLoading}
+                  className="px-6 py-3 rounded-xl bg-white text-black hover:bg-white/90 disabled:bg-white/10 disabled:text-white/40 text-sm font-medium transition-all flex items-center justify-center gap-2"
+                >
+                  {seasonLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Check score
+                </button>
+              </form>
+              {seasonError && <p className="mt-2 text-xs text-red-400">{seasonError}</p>}
+
+              {seasonResult && (
+                <div className="mt-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs text-white/60">{shortAddr(seasonResult.address)}</span>
+                    <span
+                      className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border ${
+                        seasonResult.live
+                          ? 'text-emerald-300 border-emerald-400/30 bg-emerald-400/10'
+                          : 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10'
+                      }`}
+                    >
+                      {seasonResult.live ? 'Live RPC' : 'Demo data'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 font-mono text-xs">
+                    {[
+                      { icon: TrendingUp, label: 'Tx activity', val: seasonResult.txScore, max: 35 },
+                      { icon: Flame, label: 'Active days', val: seasonResult.daysScore, max: 25 },
+                      { icon: ImageIcon, label: 'NFT score', val: seasonResult.nftScore, max: 25 },
+                      { icon: ListChecks, label: 'Quests', val: seasonResult.questScore, max: 15 },
+                    ].map((r) => (
+                      <div key={r.label} className="bg-black/30 border border-white/10 rounded-xl p-3">
+                        <div className="flex items-center gap-1.5 text-white/50">
+                          <r.icon className="w-3.5 h-3.5" />
+                          {r.label}
+                        </div>
+                        <div className="text-white text-lg mt-1">
+                          {r.val}
+                          <span className="text-white/30 text-xs">/{r.max}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div
+                    className={`rounded-xl p-4 border flex items-center justify-between ${
+                      seasonResult.eligible ? 'border-emerald-400/30 bg-emerald-400/5' : 'border-white/10 bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <BadgeCheck className={`w-5 h-5 ${seasonResult.eligible ? 'text-emerald-400' : 'text-white/30'}`} />
+                      <span className="text-sm text-white">
+                        {seasonResult.eligible ? `Qualifies for the Season ${SEASON.number} badge` : 'Below the 80-point threshold'}
+                      </span>
+                    </div>
+                    <span className="text-2xl font-light text-white">
+                      {seasonResult.total}
+                      <span className="text-sm text-white/40">/100</span>
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+
           {/* Section 3 — Badge Explorer */}
           <section id="badge-section" className="min-h-[calc(100vh-6rem)] flex flex-col justify-center">
             <SectionHeader
@@ -1259,7 +1948,7 @@ export default function App() {
               <div className="space-y-1 text-white/50 font-mono">
                 <div>Chain ID: {SONEIUM_CHAIN_ID}</div>
                 <div>RPC: rpc.soneium.org</div>
-                <div>Release: v1.0.0</div>
+                <div>Release: v2.0.0</div>
               </div>
             </div>
           </footer>
